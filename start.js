@@ -7,7 +7,7 @@ const headlessWallet = require('headless-byteball');
 const texts = require('./texts');
 const states = require('./states');
 const moment = require('moment');
-const priceCalculation = require('./priceCalculation');
+const calculatePrice = require('./calculatePrice');
 const offerFlightDelaysContract = require('./offerFlightDelaysContract');
 const validationUtils = require('byteballcore/validation_utils');
 const notifications = require('./notifications');
@@ -36,7 +36,7 @@ function sendRequestsToOracle(rows) {
 
 function refundBytes(contractRow) {
 	headlessWallet.issueOrSelectNextMainAddress((myAddress) => {
-		headlessWallet.sendAllBytesFromSharedAddress(contractRow.peer_asset, contractRow.shared_address, myAddress, null, (err) => {
+		headlessWallet.sendAllBytesFromSharedAddress(contractRow.shared_address, myAddress, null, (err) => {
 			if (err) return console.error(new Error(err));
 			contract.setUnlockedContract(contractRow.shared_address);
 		});
@@ -46,7 +46,7 @@ function refundBytes(contractRow) {
 function payToPeer(contractRow) {
 	let device = require('byteballcore/device');
 	if (contractRow.peer_asset) {
-		headlessWallet.sendAllAssetFromSharedAddress(contractRow.peer_asset, null, contractRow.shared_address, contractRow.peer_address, contractRow.peer_device_address, (err) => {
+		headlessWallet.sendAssetFromSharedAddress(contractRow.amount, contractRow.peer_asset, null, contractRow.shared_address, contractRow.peer_address, contractRow.peer_device_address, (err) => {
 			if (err) return console.error(new Error(err));
 			contract.setUnlockedContract(contractRow.shared_address);
 			device.sendMessageToDevice(contractRow.peer_device_address, 'text', texts.weSentPayment());
@@ -145,6 +145,7 @@ eventBus.on('text', (from_address, text) => {
 	states.get(from_address, (state) => {
 		let device = require('byteballcore/device.js');
 		let lcText = text.toLowerCase().trim().replace(/\s+/, ' ');
+		let ucText = text.toUpperCase().trim().replace(/\s+/, ' ');
 		let validTime = false;
 
 		if (getHelpText(lcText)) return device.sendMessageToDevice(from_address, 'text', getHelpText(lcText));
@@ -155,38 +156,44 @@ eventBus.on('text', (from_address, text) => {
 			state.compensation = null;
 		}
 
-		if (validationUtils.isValidAddress(lcText.toUpperCase()) && state.price && state.compensation && state.flight && state.delay) {
-			let minDaysBeforeFlight = moment().set("hours", 0).set("minutes", 0).set("seconds", 0).set('milliseconds', 0).add(conf.minDaysBeforeFlight, 'days').valueOf();
-			if (moment(state.flight.split(' ')[1], "DD.MM.YYYY").valueOf() >= minDaysBeforeFlight) {
-				return getLastAddress((myAddress) => {
-					offerFlightDelaysContract(myAddress, moment(state.flight.split(' ')[1], "DD.MM.YYYY"), {
-						peerAddress: lcText.toUpperCase(),
-						peerDeviceAddress: from_address,
-						peerAmount: state.price,
-						myAmount: state.compensation,
-						asset: 'base',
-						feed_name: state.flight.toUpperCase(),
-						relation: '>',
-						feedValue: state.delay,
-						expiry: 1, //days
-						timeout: 4 //hours
-					}, function (err, paymentRequestText) {
-						if (err) {
-							console.error(new Error('offerContract error: ' + JSON.stringify(err)));
-							notifications.notifyAdmin('offerContract error', JSON.stringify(err));
-							return device.sendMessageToDevice(from_address, 'text', texts.errorOfferContract());
-						}
-						state.flight = null;
-						state.delay = null;
-						state.compensation = null;
-						state.save();
-						return device.sendMessageToDevice(from_address, 'text', paymentRequestText);
+		if (validationUtils.isValidAddress(ucText) && state.price && state.compensation && state.flight && state.delay) {
+			let minDay = moment().set("hours", 0).set("minutes", 0).set("seconds", 0).set('milliseconds', 0).add(conf.minDaysBeforeFlight, 'days').valueOf();
+			if (moment(state.flight.split(' ')[1], "DD.MM.YYYY").valueOf() >= minDay) {
+				if (moment(state.flight.split(' ')[1], "DD.MM.YYYY").valueOf() <= moment().add(conf.maxMonthBeforeFlight, 'month').valueOf()) {
+					return getLastAddress((myAddress) => {
+						offerFlightDelaysContract(myAddress, moment(state.flight.split(' ')[1], "DD.MM.YYYY"), {
+							peerAddress: ucText,
+							peerDeviceAddress: from_address,
+							peerAmount: state.price,
+							myAmount: state.compensation,
+							asset: 'base',
+							feed_name: state.flight,
+							relation: '>',
+							feedValue: state.delay,
+							expiry: 1, //days
+							timeout: 4 //hours
+						}, function (err, paymentRequestText) {
+							if (err) {
+								console.error(new Error('offerContract error: ' + JSON.stringify(err)));
+								notifications.notifyAdmin('offerContract error', JSON.stringify(err));
+								return device.sendMessageToDevice(from_address, 'text', texts.errorOfferContract());
+							}
+							state.flight = null;
+							state.delay = null;
+							state.compensation = null;
+							state.save();
+							return device.sendMessageToDevice(from_address, 'text', paymentRequestText);
+						});
 					});
-				});
+				} else {
+					state.flight = null;
+					state.save();
+					return device.sendMessageToDevice(from_address, 'text', texts.errorMaxMonthBeforeFlight(conf.maxMonthBeforeFlight));
+				}
 			} else {
 				state.flight = null;
 				state.save();
-				return device.sendMessageToDevice(from_address, 'text', texts.errorValidDate());
+				return device.sendMessageToDevice(from_address, 'text', texts.errorMinDaysBeforeFlight(conf.minDaysBeforeFlight));
 			}
 		}
 
@@ -195,13 +202,17 @@ eventBus.on('text', (from_address, text) => {
 			let arrFlightMatches = flight.toUpperCase().split(' ')[0].match(/\b([A-Z0-9]{2})\s*(\d{1,4}[A-Z]?)\b/);
 
 			if (flight && moment(flight.split(' ')[1], "DD.MM.YYYY").isValid()) {
-				let minDaysBeforeFlight = moment().set("hours", 0).set("minutes", 0).set("seconds", 0).set('milliseconds', 0).add(conf.minDaysBeforeFlight, 'days').valueOf();
-				if (moment(flight.split(' ')[1], "DD.MM.YYYY").valueOf() >= minDaysBeforeFlight) {
-					if (conf.nonInsurableAirlines.indexOf(arrFlightMatches[1]) === -1 && conf.nonInsurableFlights.indexOf(flight.split(' ')[0].toUpperCase()) === -1) {
-						lcText = lcText.replace(flight, '').trim();
-						state.flight = flight;
+				let minDay = moment().set("hours", 0).set("minutes", 0).set("seconds", 0).set('milliseconds', 0).add(conf.minDaysBeforeFlight, 'days').valueOf();
+				if (moment(flight.split(' ')[1], "DD.MM.YYYY").valueOf() >= minDay) {
+					if (moment(flight.split(' ')[1], "DD.MM.YYYY").valueOf() <= moment().add(conf.maxMonthBeforeFlight, 'month').valueOf()) {
+						if (conf.nonInsurableAirlines.indexOf(arrFlightMatches[1]) === -1 && conf.nonInsurableFlights.indexOf(flight.split(' ')[0].toUpperCase()) === -1) {
+							lcText = lcText.replace(flight, '').trim();
+							state.flight = flight.toUpperCase();
+						} else {
+							return device.sendMessageToDevice(from_address, 'text', texts.errorNonInsurable());
+						}
 					} else {
-						return device.sendMessageToDevice(from_address, 'text', texts.errorNonInsurable());
+						return device.sendMessageToDevice(from_address, 'text', texts.errorMaxMonthBeforeFlight(conf.maxMonthBeforeFlight));
 					}
 				} else {
 					return device.sendMessageToDevice(from_address, 'text', texts.errorMinDaysBeforeFlight(conf.minDaysBeforeFlight));
@@ -256,7 +267,7 @@ eventBus.on('text', (from_address, text) => {
 			return device.sendMessageToDevice(from_address, 'text', texts.edit());
 		}
 
-		priceCalculation(state, (err, price) => {
+		calculatePrice(state, (err, price) => {
 			if (err) return device.sendMessageToDevice(from_address, 'text', err);
 			state.price = price;
 			state.save();

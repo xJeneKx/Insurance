@@ -11,7 +11,7 @@ exports.bLight = false;
 exports.storage = 'sqlite';
 
 
-exports.hub = 'byteball.org/bbt';
+exports.hub = 'byteball.org/bb';
 exports.deviceName = 'Insurance';
 exports.permanent_paring_secret = '0000';
 exports.control_addresses = [];
@@ -39,7 +39,6 @@ exports.flightstats = {appId: '', appKey: ''};
 
 //buttons
 exports.delayTime = [
-	{minutes: 1, text: '1 minutes'},
 	{minutes: 30, text: '30 minutes'},
 	{minutes: 60, text: '1 hour'},
 	{minutes: 60 * 2, text: '2 hours'},
@@ -57,13 +56,14 @@ exports.defaultPriceInPercent = {
 	gt45: 50
 };
 
-exports.defaultAsset = constants.BLACKBYTES_ASSET;
+exports.defaultAsset = 'base';
 exports.defaultNameAsset = ''; // change if you want to give your name of asset
 exports.unitValue = 1000000000; //GB
 exports.minCompensation = 0.00001; //GB - 0.00001 - 10000 bytes
 exports.maxCompensation = 100; //GB
 
 exports.minDaysBeforeFlight = 1;
+exports.maxMonthBeforeFlight = 3;
 
 exports.analysisOfRealTimeDelays = false;
 exports.profitMargin = 5; //% if use analysisOfRealTimeDelays

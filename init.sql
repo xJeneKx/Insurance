@@ -29,6 +29,7 @@ CREATE TABLE contracts (
 	 date TIMESTAMP NOT NULL,
 	 delay INT NOT NULL,
 	 shared_address CHAR(32) NOT NULL,
+	 timeout INT NOT NULL,
 	 checked_timeout INT NOT NULL DEFAULT 0,
 	 refunded INT NOT NULL DEFAULT 0,
 	 check_flight INT NOT NULL DEFAULT 1,
@@ -38,6 +39,7 @@ CREATE TABLE contracts (
 	 peer_device_address CHAR(33) NOT NULL,
 	 peer_amount INT NOT NULL,
 	 peer_asset CHAR(44),
+	 amount INT NOT NULL,
 	 winner CHAR(10),
 	PRIMARY KEY(shared_address),
 	FOREIGN KEY (shared_address) REFERENCES shared_addresses(shared_address)

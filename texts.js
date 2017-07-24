@@ -99,3 +99,7 @@ exports.errorNonInsurable = () => {
 exports.errorMinDaysBeforeFlight = (days) => {
 	return "Minimum days before flight: " + days;
 };
+
+exports.errorMaxMonthBeforeFlight = (month) => {
+	return "Maximum month before flight: " + month;
+};

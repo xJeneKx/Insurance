@@ -56,8 +56,8 @@ function getRatings(flight, cb) {
 	});
 }
 
-module.exports = (stat, cb) => {
-	let flight = stat.flight.toUpperCase().split(' ')[0];
+module.exports = (state, cb) => {
+	let flight = state.flight.toUpperCase().split(' ')[0];
 	let arrFlightMatches = flight.match(/\b([A-Z0-9]{2})\s*(\d{1,4}[A-Z]?)\b/);
 
 	if (conf.analysisOfRealTimeDelays) {
@@ -67,22 +67,22 @@ module.exports = (stat, cb) => {
 			let minDelay = 0;
 			let maxDelay = 0;
 
-			if (stat.delay >= 45) {
+			if (state.delay >= 45) {
 				minDelay = 45;
 				maxDelay = objRatings.delayMax;
 			}
 
-			if (stat.delay < 45) {
+			if (state.delay < 45) {
 				minDelay = 30;
 				maxDelay = 45;
 			}
 
-			if (stat.delay < 30) {
+			if (state.delay < 30) {
 				minDelay = 15;
 				maxDelay = 30;
 			}
 
-			if (stat.delay < 15) {
+			if (state.delay < 15) {
 				minDelay = 0;
 				maxDelay = 15;
 			}
@@ -90,13 +90,13 @@ module.exports = (stat, cb) => {
 			let percentageDelays = 100 / (objRatings.observations / getCountDelayedFlights(objRatings, maxDelay));
 			let percentageDelays2 = 100 / (objRatings.observations / getCountDelayedFlights(objRatings, minDelay));
 
-			let percent = (percentageDelays2 + (percentageDelays - percentageDelays2) * (stat.delay - minDelay) / (maxDelay - minDelay)) + conf.profitMargin;
+			let percent = (percentageDelays2 + (percentageDelays - percentageDelays2) * (state.delay - minDelay) / (maxDelay - minDelay)) + conf.profitMargin;
 
 			if (percent > conf.maxPriceInPercent) {
 				return cb("The probability of this delay is too high, please increase the delay time.");
 			}
 
-			let price = stat.compensation * percent / 100;
+			let price = state.compensation * percent / 100;
 			if (price.toString().match(/\./)) {
 				if (price.toString().split('.')[1].length > 9) price = price.toFixed(9);
 			}
@@ -104,19 +104,19 @@ module.exports = (stat, cb) => {
 		});
 	} else {
 		let percent = 0;
-		if (stat.delay >= 45) percent = conf.defaultPriceInPercent.gt45;
-		else if (stat.delay >= 30) percent = conf.defaultPriceInPercent.gt30;
-		else if (stat.delay >= 15) percent = conf.defaultPriceInPercent.gt15;
+		if (state.delay >= 45) percent = conf.defaultPriceInPercent.gt45;
+		else if (state.delay >= 30) percent = conf.defaultPriceInPercent.gt30;
+		else if (state.delay >= 15) percent = conf.defaultPriceInPercent.gt15;
 		else percent = conf.defaultPriceInPercent.gt0;
 
-		let price = stat.compensation * percent / 100;
+		let price = state.compensation * percent / 100;
 
 		if (conf.coefficientsForFlight && conf.coefficientsForFlight[flight]) {
 			price *= conf.coefficientsForFlight[flight];
 		} else if (conf.coefficientForAirline && conf.coefficientForAirline[arrFlightMatches[1]]) {
 			price *= conf.coefficientForAirline[arrFlightMatches[1]];
 		}
-		if ((price * 100 / stat.compensation) > conf.maxPriceInPercent) {
+		if ((price * 100 / state.compensation) > conf.maxPriceInPercent) {
 			return cb("The probability of this delay is too high, please increase the delay time.");
 		}
 		if (price.toString().match(/\./)) {

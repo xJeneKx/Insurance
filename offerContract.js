@@ -63,6 +63,7 @@ module.exports = (myAddress, event_date, contract, cb) => {
 		let expiry_address = (contract.expiry_party === 'me') ? myAddress : contract.peerAddress;
 		let data_device_address = (contract.data_party === 'me') ? device.getMyDeviceAddress() : contract.peerDeviceAddress;
 		let expiry_device_address = (contract.expiry_party === 'me') ? device.getMyDeviceAddress() : contract.peerDeviceAddress;
+		let timeout = Date.now() + Math.round(contract.timeout * 3600 * 1000);
 		let arrDefinition = ['or', [
 			['and', [
 				arrSeenCondition,
@@ -98,7 +99,7 @@ module.exports = (myAddress, event_date, contract, cb) => {
 			['and', [
 				['address', myAddress],
 				['not', arrSeenCondition],
-				['in data feed', [[conf.TIMESTAMPER_ADDRESS], 'timestamp', '>', Date.now() + Math.round(contract.timeout * 3600 * 1000)]]
+				['in data feed', [[conf.TIMESTAMPER_ADDRESS], 'timestamp', '>', timeout]]
 			]]
 		]];
 		let assocSignersByPath = {
@@ -147,7 +148,7 @@ module.exports = (myAddress, event_date, contract, cb) => {
 					let paymentJsonBase64 = Buffer(paymentJson).toString('base64');
 					let paymentRequestCode = 'payment:' + paymentJsonBase64;
 					let paymentRequestText = '[your share of payment to the contract](' + paymentRequestCode + ')';
-					cb(null, paymentRequestText, shared_address);
+					cb(null, paymentRequestText, shared_address, timeout);
 				});
 			}
 		});
