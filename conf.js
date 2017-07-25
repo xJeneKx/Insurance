@@ -63,7 +63,7 @@ exports.minCompensation = 0.00001; //GB - 0.00001 - 10000 bytes
 exports.maxCompensation = 100; //GB
 
 exports.minDaysBeforeFlight = 1;
-exports.maxMonthBeforeFlight = 3;
+exports.maxMonthsBeforeFlight = 3;
 
 exports.analysisOfRealTimeDelays = false;
 exports.profitMargin = 5; //% if use analysisOfRealTimeDelays

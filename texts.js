@@ -100,6 +100,6 @@ exports.errorMinDaysBeforeFlight = (days) => {
 	return "Minimum days before flight: " + days;
 };
 
-exports.errorMaxMonthBeforeFlight = (month) => {
-	return "Maximum month before flight: " + month;
+exports.errorMaxMonthsBeforeFlight = (months) => {
+	return "Maximum month before flight: " + months;
 };

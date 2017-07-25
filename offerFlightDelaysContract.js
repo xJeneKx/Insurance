@@ -5,9 +5,9 @@ const moment = require('moment');
 const db = require('byteballcore/db');
 
 module.exports = (myAddress, event_date, contract, cb) => {
-	let arrSplitFeedName = contract.feed_name.split(' ');
-	let m = moment(arrSplitFeedName[1], 'DD.MM.YYYY');
-	contract.feed_name = arrSplitFeedName[0] + '-' + m.format('YYYY-MM-DD');
+	let arrSplitFlight = contract.flight.split(' ');
+	let m = moment(arrSplitFlight[1], 'DD.MM.YYYY');
+	contract.feed_name = arrSplitFlight[0] + '-' + m.format('YYYY-MM-DD');
 
 	offerContract(myAddress, event_date, contract, (err, paymentRequestText, shared_address, timeout) => {
 		if (err) return cb(err);
