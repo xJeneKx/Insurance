@@ -42,5 +42,6 @@ CREATE TABLE contracts (
 	 amount INT NOT NULL,
 	 winner CHAR(10),
 	PRIMARY KEY(shared_address),
-	FOREIGN KEY (shared_address) REFERENCES shared_addresses(shared_address)
+	FOREIGN KEY (shared_address) REFERENCES shared_addresses(shared_address),
+	FOREIGN KEY (peer_asset) REFERENCES assets(unit)
 );

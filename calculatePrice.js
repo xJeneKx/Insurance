@@ -18,7 +18,7 @@ function getCountDelayedFlights(objRatings, delay) {
 	if (delay < 45)
 		delayedFlights += objRatings.late30;
 
-	if (delay <= 45)
+	if (delay >= 45)
 		delayedFlights += objRatings.late45;
 
 	delayedFlights += objRatings.cancelled;
@@ -87,8 +87,8 @@ module.exports = (state, cb) => {
 				maxDelay = 15;
 			}
 
-			let percentageDelays = 100 / (objRatings.observations / getCountDelayedFlights(objRatings, maxDelay));
-			let percentageDelays2 = 100 / (objRatings.observations / getCountDelayedFlights(objRatings, minDelay));
+			let percentageDelays = 100 *   getCountDelayedFlights(objRatings, maxDelay) / objRatings.observations;
+			let percentageDelays2 = 100 *   getCountDelayedFlights(objRatings, minDelay) / objRatings.observations;
 
 			let percent = (percentageDelays2 + (percentageDelays - percentageDelays2) * (state.delay - minDelay) / (maxDelay - minDelay)) + conf.profitMargin;
 
@@ -96,10 +96,7 @@ module.exports = (state, cb) => {
 				return cb("The probability of this delay is too high, please increase the delay time.");
 			}
 
-			let price = state.compensation * percent / 100;
-			if (price.toString().match(/\./)) {
-				if (price.toString().split('.')[1].length > 9) price = price.toFixed(9);
-			}
+			let price = Math.round(state.compensation * percent / 100);
 			return cb(null, price);
 		});
 	} else {
@@ -119,9 +116,7 @@ module.exports = (state, cb) => {
 		if ((price * 100 / state.compensation) > conf.maxPriceInPercent) {
 			return cb("The probability of this delay is too high, please increase the delay time.");
 		}
-		if (price.toString().match(/\./)) {
-			if (price.toString().split('.')[1].length > 9) price = price.toFixed(9);
-		}
+		price = Math.round(price);
 		return cb(null, price);
 	}
 };

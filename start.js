@@ -165,7 +165,7 @@ eventBus.on('text', (from_address, text) => {
 							peerAddress: ucText,
 							peerDeviceAddress: from_address,
 							peerAmount: state.price,
-							myAmount: state.compensation,
+							myAmount: state.compensation - state.price,
 							asset: 'base',
 							flight: state.flight,
 							relation: '>',
@@ -244,9 +244,8 @@ eventBus.on('text', (from_address, text) => {
 			state.delay = minutes;
 		}
 
-		if (/[0-9]+,[0-9]+/.test(lcText)) lcText = lcText.replace(',', '.');
-		if (/[0-9]+(\.[0-9]+)?/.test(lcText)) {
-			let compensation = parseFloat(lcText.match(/[0-9]+(\.[0-9]+)?/)[0]);
+		if (/[0-9]+/.test(lcText)) {
+			let compensation = parseFloat(lcText.match(/[0-9]+/)[0]);
 			if (compensation > conf.maxCompensation) {
 				return device.sendMessageToDevice(from_address, 'text', texts.errorMaxCompensation());
 			} else if (compensation < conf.minCompensation) {

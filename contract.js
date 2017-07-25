@@ -43,12 +43,11 @@ exports.checkAndRefundContractsTimeout = () => {
 						if (err) {
 							console.error(new Error(err));
 							arrAddressesToRefund.splice(arrAddressesToRefund.indexOf(address), 1);
+						}else {
+							db.query("UPDATE contracts SET checked_timeout = 1, refunded = 1 WHERE shared_address =?", [address], () => {});
 						}
 						callback();
 					});
-				}, () => {
-					if (arrAddressesToRefund.length)
-						db.query("UPDATE contracts SET checked_timeout = 1, refunded = 1 WHERE shared_address IN (?)", [arrAddressesToRefund], () => {});
 				});
 			});
 		});
