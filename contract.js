@@ -9,9 +9,8 @@ const conf = require('byteballcore/conf');
 
 exports.checkAndRefundContractsTimeout = () => {
 	db.query("SELECT shared_address, peer_amount FROM data_feeds, contracts WHERE unit IN (\n\
-		SELECT unit_authors.unit FROM unit_authors, units\n\
+		SELECT unit_authors.unit FROM unit_authors JOIN units USING(unit)\n\
 		WHERE address = ? \n\
-		AND units.unit = unit_authors.unit\n\
 		AND units.is_stable = 1\n\
 		ORDER BY unit_authors.rowid DESC LIMIT 0,1\n\
 		)\n\
@@ -23,8 +22,8 @@ exports.checkAndRefundContractsTimeout = () => {
 		let arrFullyFundedAddresses = [];
 
 		async.each(rows, (row, callback) => {
-			db.query("SELECT address, amount FROM outputs, units \n\
-				WHERE address = ? AND amount = ? AND units.unit = outputs.unit AND is_stable = 1 AND sequence = 'good'", [row.shared_address, row.peer_amount], (rows2) => {
+			db.query("SELECT address, amount FROM outputs JOIN units USING(unit) \n\
+				WHERE address = ? AND amount = ? AND is_stable = 1 AND sequence = 'good'", [row.shared_address, row.peer_amount], (rows2) => {
 				if (rows2.length) {
 					arrFullyFundedAddresses.push(row.shared_address);
 				} else {
@@ -66,7 +65,7 @@ exports.setWinner = (feed_name, winner) => {
 	db.query("UPDATE contracts SET checked_flight = 1, winner = ? WHERE feed_name = ?", [winner, feed_name], () => {});
 };
 
-exports.getNotFinalUnlockedContracts = (cb) => {
+exports.getNotUnlockedContracts = (cb) => {
 	db.query("SELECT * FROM contracts WHERE checked_timeout = 1 AND checked_flight = 1 AND unlocked = 0", cb)
 };
 

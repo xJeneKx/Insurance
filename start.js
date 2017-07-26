@@ -46,7 +46,7 @@ function refundBytes(contractRow) {
 function payToPeer(contractRow) {
 	let device = require('byteballcore/device');
 	if (contractRow.peer_asset) {
-		headlessWallet.sendAssetFromSharedAddress(contractRow.amount, contractRow.peer_asset, null, contractRow.shared_address, contractRow.peer_address, contractRow.peer_device_address, (err) => {
+		headlessWallet.sendAssetFromSharedAddress(contractRow.peer_asset, contractRow.amount, null, contractRow.shared_address, contractRow.peer_address, contractRow.peer_device_address, (err) => {
 			if (err) return console.error(new Error(err));
 			contract.setUnlockedContract(contractRow.shared_address);
 			device.sendMessageToDevice(contractRow.peer_device_address, 'text', texts.weSentPayment());
@@ -60,20 +60,19 @@ function payToPeer(contractRow) {
 function checkStatusOfContracts(rows) {
 	let device = require('byteballcore/device');
 	let arrFeedNames = rows.map(row => row.feed_name);
-	let assocContractsToFeedName = {};
+	let assocContractsByFeedName = {};
 	rows.forEach((row) => {
-		if (!assocContractsToFeedName[row.feed_name]) assocContractsToFeedName[row.feed_name] = [];
-		assocContractsToFeedName[row.feed_name].push(row);
+		if (!assocContractsByFeedName[row.feed_name]) assocContractsByFeedName[row.feed_name] = [];
+		assocContractsByFeedName[row.feed_name].push(row);
 	});
 	db.query("SELECT data_feeds.feed_name, data_feeds.int_value, units.unit, units.is_stable\n\
-	FROM data_feeds, units, unit_authors\n\
+	FROM data_feeds, unit_authors JOIN units USING(unit)\n\
 	WHERE data_feeds.feed_name IN(?)\n\
-	AND units.unit = data_feeds.unit\n\
 	AND unit_authors.unit = data_feeds.unit\n\
 	AND unit_authors.address = ?", [arrFeedNames, conf.oracle_address], (rows2) => {
 		rows2.forEach((row) => {
-			if (assocContractsToFeedName[row.feed_name]) {
-				assocContractsToFeedName[row.feed_name].forEach((contractRow) => {
+			if (assocContractsByFeedName[row.feed_name]) {
+				assocContractsByFeedName[row.feed_name].forEach((contractRow) => {
 					if (row.int_value > contractRow.delay) {
 						if (row.is_stable) {
 							payToPeer(contractRow);
@@ -198,8 +197,8 @@ eventBus.on('text', (from_address, text) => {
 		}
 
 		if (/\b[A-Z0-9]{2}\d{1,4}([A-Z]?)\s\d{1,2}\.\d{2}\.\d{4}\b/.test(ucText)) {
-			let flight = lcText.match(/\b[a-z0-9]{2}\d{1,4}([a-z]?)\s\d{1,2}\.\d{2}\.\d{4}\b/)[0];
-			let arrFlightMatches = flight.toUpperCase().split(' ')[0].match(/\b([A-Z0-9]{2})\s*(\d{1,4}[A-Z]?)\b/);
+			let flight = ucText.match(/\b[A-Z0-9]{2}\d{1,4}([A-Z]?)\s\d{1,2}\.\d{2}\.\d{4}\b/)[0];
+			let arrFlightMatches = flight.split(' ')[0].match(/\b([A-Z0-9]{2})\s*(\d{1,4}[A-Z]?)\b/);
 
 			if (flight && moment(flight.split(' ')[1], "DD.MM.YYYY").isValid()) {
 				let minDay = moment().set("hours", 0).set("minutes", 0).set("seconds", 0).set('milliseconds', 0).add(conf.minDaysBeforeFlight, 'days').valueOf();
@@ -289,8 +288,8 @@ function getListContractsAndSendRequest() {
 	});
 }
 
-function getListNotFinalRefundedContracts() {
-	contract.getNotFinalUnlockedContracts((rows) => {
+function getListNotRefundedContracts() {
+	contract.getNotUnlockedContracts((rows) => {
 		rows.forEach((contractRow) => {
 			if (contractRow.winner) {
 				if (contractRow.winner === 'me') {
@@ -345,8 +344,8 @@ eventBus.on('headless_wallet_ready', () => {
 
 			setInterval(getListContractsAndSendRequest, 6 * 3600 * 1000);
 
-			getListNotFinalRefundedContracts();
-			setInterval(getListNotFinalRefundedContracts, 6 * 3600 * 1000);
+			getListNotRefundedContracts();
+			setInterval(getListNotRefundedContracts, 6 * 3600 * 1000);
 		}
 	);
 });

@@ -57,7 +57,7 @@ function getRatings(flight, cb) {
 }
 
 module.exports = (state, cb) => {
-	let flight = state.flight.toUpperCase().split(' ')[0];
+	let flight = state.flight.split(' ')[0];
 	let arrFlightMatches = flight.match(/\b([A-Z0-9]{2})\s*(\d{1,4}[A-Z]?)\b/);
 
 	if (conf.analysisOfRealTimeDelays) {
