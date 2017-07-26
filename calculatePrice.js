@@ -90,7 +90,14 @@ module.exports = (state, cb) => {
 			let percentageDelays = 100 *   getCountDelayedFlights(objRatings, maxDelay) / objRatings.observations;
 			let percentageDelays2 = 100 *   getCountDelayedFlights(objRatings, minDelay) / objRatings.observations;
 
-			let percent = (percentageDelays2 + (percentageDelays - percentageDelays2) * (state.delay - minDelay) / (maxDelay - minDelay)) + conf.profitMargin;
+			let percent;
+
+			if(state.delay > maxDelay) {
+				percent = ((state.delay - minDelay) * (percentageDelays2 - percentageDelays) / (maxDelay - minDelay)) + percentageDelays + conf.profitMargin;
+			}else{
+				percent = (percentageDelays2 + (percentageDelays - percentageDelays2) * (state.delay - minDelay) / (maxDelay - minDelay)) + conf.profitMargin;
+			}
+
 
 			if (percent > conf.maxPriceInPercent) {
 				return cb("The probability of this delay is too high, please increase the delay time.");
