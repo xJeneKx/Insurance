@@ -243,6 +243,7 @@ eventBus.on('text', (from_address, text) => {
 		if (/[0-9]+,[0-9]+/.test(ucText)) ucText = ucText.replace(',', '.');
 		if (/[0-9]+(\.[0-9]+)?/.test(ucText)) {
 			let compensation = parseFloat(ucText.match(/[0-9]+(\.[0-9]+)?/)[0]);
+			ucText = ucText.replace(ucText.match(/[0-9]+(\.[0-9]+)?/)[0], '').trim();
 			if (compensation > conf.maxCompensation) {
 				return device.sendMessageToDevice(from_address, 'text', texts.errorMaxCompensation());
 			} else if (compensation < conf.minCompensation) {
@@ -257,9 +258,9 @@ eventBus.on('text', (from_address, text) => {
 		if (!state.delay) return device.sendMessageToDevice(from_address, 'text', texts.delay());
 		if (!state.compensation) return device.sendMessageToDevice(from_address, 'text', texts.compensation());
 
-		if (ucText === 'OK') {
+		if (/OK/.test(ucText)) {
 			return device.sendMessageToDevice(from_address, 'text', texts.insertMyAddress());
-		} else if (ucText === 'EDIT') {
+		} else if (/'EDIT'/.test(ucText)) {
 			return device.sendMessageToDevice(from_address, 'text', texts.edit());
 		}
 

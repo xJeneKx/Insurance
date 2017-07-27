@@ -33,7 +33,7 @@ exports.edit = () => {
 };
 
 exports.total = (flight, delay, compensation, price) => {
-	return `Flight: ${flight}\nDelay: ${delay} minutes\nCompensation: ${compensation} ${conf.defaultNameAsset}\n-----------------------------\nPrice: ${price} ${conf.defaultNameAsset}\n[OK](command:ok)\t[Edit](command:edit)`;
+	return `Flight: ${flight}\nDelay: ${delay} minutes\nCompensation: ${compensation} ${conf.defaultNameAsset}\n-----------------------------\nPrice: ${price} ${conf.defaultNameAsset}\n[OK](command:${flight} ${delay} minutes ${compensation} ok)\t[Edit](command:edit)`;
 };
 
 exports.arriveOnTime = () => {
