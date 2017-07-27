@@ -18,7 +18,7 @@ function getCountDelayedFlights(objRatings, delay) {
 	if (delay < 45)
 		delayedFlights += objRatings.late30;
 
-	if (delay >= 45)
+	if (delay === 45)
 		delayedFlights += objRatings.late45;
 
 	delayedFlights += objRatings.cancelled;
@@ -110,7 +110,7 @@ module.exports = (state, cb) => {
 				maxDelay = objRatings.delayMax;
 			}
 
-			let percentageDelays = (maxDelay === objRatings.delayMax) ? 0 : (100 * getCountDelayedFlights(objRatings, maxDelay) / objRatings.observations);
+			let percentageDelays = 100 * getCountDelayedFlights(objRatings, maxDelay) / objRatings.observations;
 			let percentageDelays2 = 100 * getCountDelayedFlights(objRatings, minDelay) / objRatings.observations;
 
 			let percent;
