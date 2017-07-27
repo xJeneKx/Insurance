@@ -18,6 +18,7 @@ module.exports = (myAddress, event_date, contract, cb) => {
 
 
 function insertContract(feed_name, date, delay, shared_address, peer_address, peer_device_address, peer_amount, asset, amount, timeout) {
+	if (asset === 'base') asset = null;
 	db.query("INSERT INTO contracts (feed_name, date, delay, shared_address, peer_address, peer_device_address, peer_amount, asset, amount, timeout) \n\
 		VALUES(?,?,?,?,?,?,?,?,?,?)",
 		[feed_name, date, delay, shared_address, peer_address, peer_device_address, peer_amount, asset, amount, timeout], () => {})
