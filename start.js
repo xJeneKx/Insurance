@@ -266,9 +266,9 @@ eventBus.on('text', (from_address, text) => {
 		if (!state.delay) return device.sendMessageToDevice(from_address, 'text', texts.delay());
 		if (!state.compensation) return device.sendMessageToDevice(from_address, 'text', texts.compensation());
 
-		if (ucText === 'ok') {
+		if (ucText === 'OK') {
 			return device.sendMessageToDevice(from_address, 'text', texts.insertMyAddress());
-		} else if (ucText === 'edit') {
+		} else if (ucText === 'EDIT') {
 			return device.sendMessageToDevice(from_address, 'text', texts.edit());
 		}
 
