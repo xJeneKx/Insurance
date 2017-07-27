@@ -34,8 +34,8 @@ function sendRequestsToOracle(rows) {
 	setTimeout(checkStatusOfContracts, 1000 * 60, rows);
 }
 
-function refundBytes(contractRow) {
-	headlessWallet.issueOrSelectNextMainAddress((myAddress) => {
+function refund(contractRow) {
+	getMyAddressFromContractSignature(contractRow.shared_address, (myAddress) => {
 		if(contractRow.asset){
 			headlessWallet.sendAssetFromSharedAddress(contractRow.asset, contractRow.amount, null, contractRow.shared_address, myAddress, null, (err) => {
 				if (err) return console.error(new Error(err));
@@ -90,7 +90,7 @@ function checkStatusOfContracts(rows) {
 					} else {
 						device.sendMessageToDevice(contractRow.peer_device_address, 'text', texts.arriveOnTime());
 						if (row.is_stable) {
-							refundBytes(contractRow);
+							refund(contractRow);
 						} else {
 							if (arrWaitingStableUnits.indexOf(row.unit) === -1) arrWaitingStableUnits.push(row.unit);
 						}
@@ -111,7 +111,7 @@ eventBus.on('mci_became_stable', (mci) => {
 					rowsContracts.forEach((contractRow) => {
 						if (contractRow.winner) {
 							if (contractRow.winner === 'me') {
-								refundBytes(contractRow);
+								refund(contractRow);
 							} else if (contractRow.winner === 'peer') {
 								payToPeer(contractRow);
 							}
@@ -295,18 +295,25 @@ function getListContractsAndSendRequest() {
 	});
 }
 
-function checkAndUnlockNotRefundedContracts() {
+function checkAndRetryUnlockContracts() {
 	contract.getContractsToRetryUnlock((rows) => {
 		rows.forEach((contractRow) => {
 			if (contractRow.winner) {
 				if (contractRow.winner === 'me') {
-					refundBytes(contractRow);
+					refund(contractRow);
 				} else if (contractRow.winner === 'peer') {
 					payToPeer(contractRow);
 				}
 			}
 		});
 	});
+}
+
+function getMyAddressFromContractSignature(shared_address, cb) {
+	let device = require('byteballcore/device');
+	db.query("SELECT address FROM shared_address_signing_paths WHERE shared_address = ? AND device_address = ? LIMIT 0,1", [shared_address, device.getMyDeviceAddress()], (rows)=>{
+		cb(rows[0].address);
+	})
 }
 
 eventBus.on('headless_wallet_ready', () => {
@@ -351,8 +358,8 @@ eventBus.on('headless_wallet_ready', () => {
 
 			setInterval(getListContractsAndSendRequest, 6 * 3600 * 1000);
 
-			checkAndUnlockNotRefundedContracts();
-			setInterval(checkAndUnlockNotRefundedContracts, 6 * 3600 * 1000);
+			checkAndRetryUnlockContracts();
+			setInterval(checkAndRetryUnlockContracts, 6 * 3600 * 1000);
 		}
 	);
 });
