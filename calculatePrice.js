@@ -81,7 +81,7 @@ module.exports = (state, cb) => {
 				maxDelay = objRatings.delayMax;
 			}
 
-			let percentageDelays = 100 * getCountDelayedFlights(objRatings, maxDelay) / objRatings.observations;
+			let percentageDelays = (maxDelay === objRatings.delayMax) ? 0 : (100 * getCountDelayedFlights(objRatings, maxDelay) / objRatings.observations);
 			let percentageDelays2 = 100 * getCountDelayedFlights(objRatings, minDelay) / objRatings.observations;
 
 			let percent;
