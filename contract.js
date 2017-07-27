@@ -65,7 +65,7 @@ exports.setWinner = (feed_name, winner) => {
 	db.query("UPDATE contracts SET checked_flight = 1, winner = ? WHERE feed_name = ?", [winner, feed_name], () => {});
 };
 
-exports.getNotUnlockedContracts = (cb) => {
+exports.getContractsToRetryUnlock = (cb) => {
 	db.query("SELECT * FROM contracts WHERE checked_timeout = 1 AND checked_flight = 1 AND unlocked = 0", cb)
 };
 

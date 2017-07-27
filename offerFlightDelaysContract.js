@@ -17,8 +17,8 @@ module.exports = (myAddress, event_date, contract, cb) => {
 };
 
 
-function insertContract(feed_name, date, delay, shared_address, peer_address, peer_device_address, peer_amount, peer_asset, amount, timeout) {
-	db.query("INSERT INTO contracts (feed_name, date, delay, shared_address, peer_address, peer_device_address, peer_amount, peer_asset, amount, timeout) \n\
+function insertContract(feed_name, date, delay, shared_address, peer_address, peer_device_address, peer_amount, asset, amount, timeout) {
+	db.query("INSERT INTO contracts (feed_name, date, delay, shared_address, peer_address, peer_device_address, peer_amount, asset, amount, timeout) \n\
 		VALUES(?,?,?,?,?,?,?,?,?,?)",
-		[feed_name, date, delay, shared_address, peer_address, peer_device_address, peer_amount, peer_asset, amount, timeout], () => {})
+		[feed_name, date, delay, shared_address, peer_address, peer_device_address, peer_amount, asset, amount, timeout], () => {})
 }

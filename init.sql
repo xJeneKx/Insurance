@@ -38,10 +38,10 @@ CREATE TABLE contracts (
 	 peer_address CHAR(32) NOT NULL,
 	 peer_device_address CHAR(33) NOT NULL,
 	 peer_amount INT NOT NULL,
-	 peer_asset CHAR(44),
+	 asset CHAR(44),
 	 amount INT NOT NULL,
 	 winner CHAR(10),
 	PRIMARY KEY(shared_address),
 	FOREIGN KEY (shared_address) REFERENCES shared_addresses(shared_address),
-	FOREIGN KEY (peer_asset) REFERENCES assets(unit)
+	FOREIGN KEY (asset) REFERENCES assets(unit)
 );

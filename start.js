@@ -45,8 +45,8 @@ function refundBytes(contractRow) {
 
 function payToPeer(contractRow) {
 	let device = require('byteballcore/device');
-	if (contractRow.peer_asset) {
-		headlessWallet.sendAssetFromSharedAddress(contractRow.peer_asset, contractRow.amount, null, contractRow.shared_address, contractRow.peer_address, contractRow.peer_device_address, (err) => {
+	if (contractRow.asset) {
+		headlessWallet.sendAssetFromSharedAddress(contractRow.asset, contractRow.amount, null, contractRow.shared_address, contractRow.peer_address, contractRow.peer_device_address, (err) => {
 			if (err) return console.error(new Error(err));
 			contract.setUnlockedContract(contractRow.shared_address);
 			device.sendMessageToDevice(contractRow.peer_device_address, 'text', texts.weSentPayment());
@@ -143,11 +143,10 @@ eventBus.on('text', (from_address, text) => {
 
 	states.get(from_address, (state) => {
 		let device = require('byteballcore/device.js');
-		let lcText = text.toLowerCase().trim().replace(/\s+/, ' ');
 		let ucText = text.toUpperCase().trim().replace(/\s+/, ' ');
 		let validTime = false;
 
-		if (getHelpText(lcText)) return device.sendMessageToDevice(from_address, 'text', getHelpText(lcText));
+		if (getHelpText(ucText)) return device.sendMessageToDevice(from_address, 'text', getHelpText(ucText));
 
 		if (moment(state.date).add(3, 'days') < moment()) {
 			state.flight = null;
@@ -196,7 +195,7 @@ eventBus.on('text', (from_address, text) => {
 			}
 		}
 
-		if (/\b[A-Z0-9]{2}\d{1,4}([A-Z]?)\s\d{1,2}\.\d{2}\.\d{4}\b/.test(ucText)) {
+		if (/\b[A-Z0-9]{2}\d{1,4}([A-Z]?)\s\d{1,2}\.\d{2}\.\d{4}\b/.test(ucText)) {console.error(new Error('test'));
 			let flight = ucText.match(/\b[A-Z0-9]{2}\d{1,4}([A-Z]?)\s\d{1,2}\.\d{2}\.\d{4}\b/)[0];
 			let arrFlightMatches = flight.split(' ')[0].match(/\b([A-Z0-9]{2})\s*(\d{1,4}[A-Z]?)\b/);
 
@@ -205,7 +204,7 @@ eventBus.on('text', (from_address, text) => {
 				if (moment(flight.split(' ')[1], "DD.MM.YYYY").valueOf() >= minDay) {
 					if (moment(flight.split(' ')[1], "DD.MM.YYYY").valueOf() <= moment().add(conf.maxMonthsBeforeFlight, 'month').valueOf()) {
 						if (conf.nonInsurableAirlines.indexOf(arrFlightMatches[1]) === -1 && conf.nonInsurableFlights.indexOf(flight.split(' ')[0].toUpperCase()) === -1) {
-							lcText = lcText.replace(flight, '').trim();
+							ucText = ucText.replace(flight, '').trim();
 							state.flight = flight.toUpperCase();
 						} else {
 							return device.sendMessageToDevice(from_address, 'text', texts.errorNonInsurable());
@@ -221,12 +220,12 @@ eventBus.on('text', (from_address, text) => {
 			}
 		}
 
-		if (/[0-9]+\s(minutes|minute|hours|hour)/.test(lcText)) {
-			let arrTime = lcText.match(/[0-9]+\s(minutes|minute|hours|hour)/)[0].split(' ');
-			lcText = lcText.replace(lcText.match(/[0-9]+\s(minutes|minute|hours|hour)/)[0], '').trim();
+		if (/[0-9]+\s(MINUTES|MINUTE|HOURS|HOUR)/.test(ucText)) {
+			let arrTime = ucText.match(/[0-9]+\s(MINUTES|MINUTE|HOURS|HOUR)/)[0].split(' ');
+			ucText = ucText.replace(ucText.match(/[0-9]+\s(MINUTES|MINUTE|HOURS|HOUR)/)[0], '').trim();
 
 			let minutes;
-			if (arrTime[1] === 'minutes' || arrTime[1] === 'minute') {
+			if (arrTime[1] === 'MINUTES' || arrTime[1] === 'MINUTE') {
 				minutes = parseInt(arrTime[0]);
 			} else {
 				minutes = parseInt(arrTime[0]) * 60;
@@ -243,8 +242,9 @@ eventBus.on('text', (from_address, text) => {
 			state.delay = minutes;
 		}
 
-		if (/[0-9]+/.test(lcText)) {
-			let compensation = parseFloat(lcText.match(/[0-9]+/)[0]);
+		if (/[0-9]+,[0-9]+/.test(ucText)) ucText = ucText.replace(',', '.');
+		if (/[0-9]+(\.[0-9]+)?/.test(ucText)) {
+			let compensation = parseFloat(ucText.match(/[0-9]+(\.[0-9]+)?/)[0]);
 			if (compensation > conf.maxCompensation) {
 				return device.sendMessageToDevice(from_address, 'text', texts.errorMaxCompensation());
 			} else if (compensation < conf.minCompensation) {
@@ -259,9 +259,9 @@ eventBus.on('text', (from_address, text) => {
 		if (!state.delay) return device.sendMessageToDevice(from_address, 'text', texts.delay());
 		if (!state.compensation) return device.sendMessageToDevice(from_address, 'text', texts.compensation());
 
-		if (lcText === 'ok') {
+		if (ucText === 'ok') {
 			return device.sendMessageToDevice(from_address, 'text', texts.insertMyAddress());
-		} else if (lcText === 'edit') {
+		} else if (ucText === 'edit') {
 			return device.sendMessageToDevice(from_address, 'text', texts.edit());
 		}
 
@@ -288,8 +288,8 @@ function getListContractsAndSendRequest() {
 	});
 }
 
-function getListNotRefundedContracts() {
-	contract.getNotUnlockedContracts((rows) => {
+function checkAndRefundNotRefundedContracts() {
+	contract.getContractsToRetryUnlock((rows) => {
 		rows.forEach((contractRow) => {
 			if (contractRow.winner) {
 				if (contractRow.winner === 'me') {
@@ -344,8 +344,8 @@ eventBus.on('headless_wallet_ready', () => {
 
 			setInterval(getListContractsAndSendRequest, 6 * 3600 * 1000);
 
-			getListNotRefundedContracts();
-			setInterval(getListNotRefundedContracts, 6 * 3600 * 1000);
+			checkAndRefundNotRefundedContracts();
+			setInterval(checkAndRefundNotRefundedContracts, 6 * 3600 * 1000);
 		}
 	);
 });
