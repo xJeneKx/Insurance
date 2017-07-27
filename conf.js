@@ -11,7 +11,7 @@ exports.bLight = false;
 exports.storage = 'sqlite';
 
 
-exports.hub = 'byteball.org/bb';
+exports.hub = 'byteball.org/bb-test';
 exports.deviceName = 'Insurance';
 exports.permanent_paring_secret = '0000';
 exports.control_addresses = [];
@@ -25,16 +25,17 @@ exports.KEYS_FILENAME = 'keys.json';
 
 //email
 exports.useSmtp = false;
-
+exports.admin_email = 't';
+exports.from_email = 'q';
 
 //contract
 exports.oracle_address = 'HMW27QM7QTVRGAIIHUW7L2ZQ4N3TOJDU';
 exports.oracle_pairing_code = 'ArHXmPo3WEm6OERICadr6qcTU67lcQ0YLiUntuZEesXi@byteball.org/bb-test#0000';
-exports.TIMESTAMPER_ADDRESS = 'I2ADHGP4HL6J37NQAD73J7E5SKFIXJOT'; // isTestnet ? 'OPNUXBRSSQQGHKQNEPD2GLWQYEUY5XLD' : 'I2ADHGP4HL6J37NQAD73J7E5SKFIXJOT'
+exports.TIMESTAMPER_ADDRESS = 'OPNUXBRSSQQGHKQNEPD2GLWQYEUY5XLD'; // isTestnet ? 'OPNUXBRSSQQGHKQNEPD2GLWQYEUY5XLD' : 'I2ADHGP4HL6J37NQAD73J7E5SKFIXJOT'
 
 
 //flightstats API
-exports.flightstats = {appId: '', appKey: ''};
+exports.flightstats = {appId: '6e250501', appKey: '669fcc6695bc3e69803e0a1131d29718'};
 
 
 //buttons

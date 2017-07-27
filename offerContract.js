@@ -127,7 +127,7 @@ module.exports = (myAddress, event_date, contract, cb) => {
 				cb(err);
 			},
 			ifOk: (shared_address) => {
-				headlessWallet.issueChangeAddressAndSendPayment(contract.myAsset, contract.myAmount, shared_address, null, (err, unit) => {
+				headlessWallet.issueChangeAddressAndSendPayment(contract.myAsset, contract.myAmount, shared_address, contract.peerDeviceAddress, (err, unit) => {
 					if (err) return cb(err);
 					let arrPayments = [{
 						address: shared_address,
