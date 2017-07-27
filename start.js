@@ -195,7 +195,7 @@ eventBus.on('text', (from_address, text) => {
 			}
 		}
 
-		if (/\b[A-Z0-9]{2}\d{1,4}([A-Z]?)\s\d{1,2}\.\d{2}\.\d{4}\b/.test(ucText)) {console.error(new Error('test'));
+		if (/\b[A-Z0-9]{2}\d{1,4}([A-Z]?)\s\d{1,2}\.\d{2}\.\d{4}\b/.test(ucText)) {
 			let flight = ucText.match(/\b[A-Z0-9]{2}\d{1,4}([A-Z]?)\s\d{1,2}\.\d{2}\.\d{4}\b/)[0];
 			let arrFlightMatches = flight.split(' ')[0].match(/\b([A-Z0-9]{2})\s*(\d{1,4}[A-Z]?)\b/);
 
