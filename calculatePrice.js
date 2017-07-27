@@ -67,34 +67,18 @@ module.exports = (state, cb) => {
 			let minDelay = 0;
 			let maxDelay = 0;
 
-			if (state.delay >= 45) {
-				if (objRatings.delayMax > 45) {
-					minDelay = 45;
-					maxDelay = objRatings.delayMax;
-				} else {
-					if (objRatings.delayMax < 15) {
-						minDelay = 0;
-						maxDelay = 15;
-					} else {
-						minDelay = 30;
-						maxDelay = 45;
-					}
-				}
-			}
-
-			if (state.delay < 45) {
-				minDelay = 30;
-				maxDelay = 45;
-			}
-
-			if (state.delay < 30) {
-				minDelay = 15;
-				maxDelay = 30;
-			}
-
-			if (state.delay < 15) {
+			if (state.delay < 15 || objRatings.delayMax < 15) {
 				minDelay = 0;
 				maxDelay = 15;
+			} else if (state.delay < 30 || objRatings.delayMax < 30) {
+				minDelay = 15;
+				maxDelay = 30;
+			} else if (state.delay <= 45 || objRatings.delayMax <= 45) {
+				minDelay = 30;
+				maxDelay = 45;
+			} else {
+				minDelay = 45;
+				maxDelay = objRatings.delayMax;
 			}
 
 			let percentageDelays = 100 * getCountDelayedFlights(objRatings, maxDelay) / objRatings.observations;
