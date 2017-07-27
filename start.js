@@ -151,7 +151,6 @@ eventBus.on('text', (from_address, text) => {
 	states.get(from_address, (state) => {
 		let device = require('byteballcore/device.js');
 		let ucText = text.toUpperCase().trim().replace(/\s+/, ' ');
-		let validTime = false;
 
 		if (getHelpText(ucText)) return device.sendMessageToDevice(from_address, 'text', getHelpText(ucText));
 

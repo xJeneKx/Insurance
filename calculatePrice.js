@@ -47,8 +47,10 @@ function getRatings(flight, cb) {
 				if (!Array.isArray(jsonResult.ratings)) return cb("No information about this flight.");
 
 				let objRatings = jsonResult.ratings[0];
-				db.query("INSERT OR REPLACE INTO flightstats_ratings (date, observations, ontime, late15, late30, late45, cancelled, diverted, delayMax, flight) VALUES(" + db.getNow() + ",?,?,?,?,?,?,?,?,?)",
-					[objRatings.observations, objRatings.ontime, objRatings.late15, objRatings.late30, objRatings.late45, objRatings.cancelled, objRatings.diverted, objRatings.delayMax, flight], () => {});
+
+				if (objRatings.observations >= conf.minObservations)
+					db.query("INSERT OR REPLACE INTO flightstats_ratings (date, observations, ontime, late15, late30, late45, cancelled, diverted, delayMax, flight) VALUES(" + db.getNow() + ",?,?,?,?,?,?,?,?,?)",
+						[objRatings.observations, objRatings.ontime, objRatings.late15, objRatings.late30, objRatings.late45, objRatings.cancelled, objRatings.diverted, objRatings.delayMax, flight], () => {});
 
 				cb(null, objRatings);
 			});
@@ -56,13 +58,40 @@ function getRatings(flight, cb) {
 	});
 }
 
-module.exports = (state, cb) => {
+function offlineCalculate(state, cb) {
 	let flight = state.flight.split(' ')[0];
 	let arrFlightMatches = flight.match(/\b([A-Z0-9]{2})\s*(\d{1,4}[A-Z]?)\b/);
+
+	let percent = 0;
+	if (state.delay >= 45) percent = conf.defaultPriceInPercent.gt45;
+	else if (state.delay >= 30) percent = conf.defaultPriceInPercent.gt30;
+	else if (state.delay >= 15) percent = conf.defaultPriceInPercent.gt15;
+	else percent = conf.defaultPriceInPercent.gt0;
+
+	if (conf.coefficientsForFlight && conf.coefficientsForFlight[flight]) {
+		percent *= conf.coefficientsForFlight[flight];
+	} else if (conf.coefficientForAirline && conf.coefficientForAirline[arrFlightMatches[1]]) {
+		percent *= conf.coefficientForAirline[arrFlightMatches[1]];
+	}
+	if (percent > conf.maxPriceInPercent) {
+		return cb("The probability of this delay is too high, please increase the delay time.");
+	}
+
+	let price = state.compensation * percent / 100;
+	if (price.toString().match(/\./)) {
+		if (price.toString().split('.')[1].length > 9) price = price.toFixed(9);
+	}
+	return cb(null, price);
+}
+
+module.exports = (state, cb) => {
+	let flight = state.flight.split(' ')[0];
 
 	if (conf.analysisOfRealTimeDelays) {
 		getRatings(flight, (err, objRatings) => {
 			if (err) return cb(err);
+
+			if (objRatings.observations < conf.minObservations) return offlineCalculate(state, cb);
 
 			let minDelay = 0;
 			let maxDelay = 0;
@@ -98,25 +127,6 @@ module.exports = (state, cb) => {
 			return cb(null, price);
 		});
 	} else {
-		let percent = 0;
-		if (state.delay >= 45) percent = conf.defaultPriceInPercent.gt45;
-		else if (state.delay >= 30) percent = conf.defaultPriceInPercent.gt30;
-		else if (state.delay >= 15) percent = conf.defaultPriceInPercent.gt15;
-		else percent = conf.defaultPriceInPercent.gt0;
-
-		if (conf.coefficientsForFlight && conf.coefficientsForFlight[flight]) {
-			percent *= conf.coefficientsForFlight[flight];
-		} else if (conf.coefficientForAirline && conf.coefficientForAirline[arrFlightMatches[1]]) {
-			percent *= conf.coefficientForAirline[arrFlightMatches[1]];
-		}
-		if (percent > conf.maxPriceInPercent) {
-			return cb("The probability of this delay is too high, please increase the delay time.");
-		}
-
-		let price = state.compensation * percent / 100;
-		if (price.toString().match(/\./)) {
-			if (price.toString().split('.')[1].length > 9) price = price.toFixed(9);
-		}
-		return cb(null, price);
+		offlineCalculate(state, cb);
 	}
 };

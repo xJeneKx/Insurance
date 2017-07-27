@@ -66,6 +66,7 @@ exports.minDaysBeforeFlight = 1;
 exports.maxMonthsBeforeFlight = 3;
 
 exports.analysisOfRealTimeDelays = false;
+exports.minObservations = 20;
 exports.profitMargin = 5; //% if use analysisOfRealTimeDelays
 exports.maxPriceInPercent = 90;
 
