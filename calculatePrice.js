@@ -68,14 +68,14 @@ module.exports = (state, cb) => {
 			let maxDelay = 0;
 
 			if (state.delay >= 45) {
-				if(objRatings.delayMax > 45) {
+				if (objRatings.delayMax > 45) {
 					minDelay = 45;
 					maxDelay = objRatings.delayMax;
-				}else{
-					if(objRatings.delayMax < 15){
+				} else {
+					if (objRatings.delayMax < 15) {
 						minDelay = 0;
 						maxDelay = 15;
-					}else if(objRatings.delayMax <= 45){
+					} else {
 						minDelay = 30;
 						maxDelay = 45;
 					}
@@ -102,9 +102,7 @@ module.exports = (state, cb) => {
 
 			let percent;
 
-			if (state.delay > maxDelay) state.delay = maxDelay;
-
-			percent = (percentageDelays2 + (percentageDelays - percentageDelays2) * (state.delay - minDelay) / (maxDelay - minDelay)) + conf.profitMargin;
+			percent = (percentageDelays2 + (percentageDelays - percentageDelays2) * (Math.min(state.delay, maxDelay) - minDelay) / (maxDelay - minDelay)) + conf.profitMargin;
 
 			if (percent > conf.maxPriceInPercent) {
 				return cb("The probability of this delay is too high, please increase the delay time.");
