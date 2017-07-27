@@ -238,14 +238,6 @@ eventBus.on('text', (from_address, text) => {
 				minutes = parseInt(arrTime[0]) * 60;
 			}
 
-			for (let i = 0, l = conf.delayTime.length; i < l; i++) {
-				if (conf.delayTime[i].minutes === minutes) {
-					validTime = true;
-					break;
-				}
-			}
-
-			if (!validTime) return device.sendMessageToDevice(from_address, 'text', texts.delay());
 			state.delay = minutes;
 		}
 

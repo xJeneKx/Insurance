@@ -79,12 +79,8 @@ module.exports = (myAddress, event_date, contract, cb) => {
 					['and', [
 						['address', myAddress],
 						['or', [
+							['in data feed', [[conf.oracle_address], contract.feed_name, contract.reverseRelation, contract.feedValue + '', last_mci]],
 							['and', [
-								['address', myAddress],
-								['in data feed', [[conf.oracle_address], contract.feed_name, contract.reverseRelation, contract.feedValue + '', last_mci]]
-							]],
-							['and', [
-								['address', myAddress],
 								arrEventCondition,
 								['has', {
 									what: 'output',
