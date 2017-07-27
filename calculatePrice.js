@@ -67,10 +67,10 @@ module.exports = (state, cb) => {
 			let minDelay = 0;
 			let maxDelay = 0;
 
-			if (state.delay < 15 || objRatings.delayMax < 15) {
+			if (state.delay <= 15 || objRatings.delayMax <= 15) {
 				minDelay = 0;
 				maxDelay = 15;
-			} else if (state.delay < 30 || objRatings.delayMax < 30) {
+			} else if (state.delay <= 30 || objRatings.delayMax <= 30) {
 				minDelay = 15;
 				maxDelay = 30;
 			} else if (state.delay <= 45 || objRatings.delayMax <= 45) {
