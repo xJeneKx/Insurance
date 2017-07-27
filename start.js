@@ -36,10 +36,17 @@ function sendRequestsToOracle(rows) {
 
 function refundBytes(contractRow) {
 	headlessWallet.issueOrSelectNextMainAddress((myAddress) => {
-		headlessWallet.sendAllBytesFromSharedAddress(contractRow.shared_address, myAddress, null, (err) => {
-			if (err) return console.error(new Error(err));
-			contract.setUnlockedContract(contractRow.shared_address);
-		});
+		if(contractRow.asset){
+			headlessWallet.sendAssetFromSharedAddress(contractRow.asset, contractRow.amount, null, contractRow.shared_address, myAddress, null, (err) => {
+				if (err) return console.error(new Error(err));
+				contract.setUnlockedContract(contractRow.shared_address);
+			});
+		}else {
+			headlessWallet.sendAllBytesFromSharedAddress(contractRow.shared_address, myAddress, null, (err) => {
+				if (err) return console.error(new Error(err));
+				contract.setUnlockedContract(contractRow.shared_address);
+			});
+		}
 	});
 }
 
@@ -288,7 +295,7 @@ function getListContractsAndSendRequest() {
 	});
 }
 
-function checkAndRefundNotRefundedContracts() {
+function checkAndUnlockNotRefundedContracts() {
 	contract.getContractsToRetryUnlock((rows) => {
 		rows.forEach((contractRow) => {
 			if (contractRow.winner) {
@@ -344,8 +351,8 @@ eventBus.on('headless_wallet_ready', () => {
 
 			setInterval(getListContractsAndSendRequest, 6 * 3600 * 1000);
 
-			checkAndRefundNotRefundedContracts();
-			setInterval(checkAndRefundNotRefundedContracts, 6 * 3600 * 1000);
+			checkAndUnlockNotRefundedContracts();
+			setInterval(checkAndUnlockNotRefundedContracts, 6 * 3600 * 1000);
 		}
 	);
 });
