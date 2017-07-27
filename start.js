@@ -131,13 +131,13 @@ eventBus.on('paired', (from_address) => {
 
 function getHelpText(command) {
 	switch (command) {
-		case 'flight':
+		case 'FLIGHT':
 			return texts.flight();
 			break;
-		case 'delay':
+		case 'DELAY':
 			return texts.delay();
 			break;
-		case 'compensation':
+		case 'COMPENSATION':
 			return texts.compensation();
 			break;
 	}
